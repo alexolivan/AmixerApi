@@ -103,16 +103,23 @@ var parseControls = function(stdout) {
 }
 
 
-var parseBooleans = function (newValues, newValuesCount) {
-  for (var i = 0 ; i < newValuesCount ; i++){
-    if (newValues[i] != "on" && newValues[i] != "off"){
+var parseBooleans = function (values, count) {
+  for (var i = 0 ; i < count ; i++){
+    if (values[i] != "on" && values[i] != "off"){
       return false;
     }
   }
   return true;
 }
 
-
+var parseIntegers = function (values, count, min, max) {
+  for (var i = 0 ; i < count ; i++){
+    if (isNaN(values[i]) || parseInt(values[i], 10) < min || parseInt (values[i], 10) > max){
+      return false;
+    }
+  }
+  return true;
+}
 
 /**
  * Initialize data by scanning detected sound cards
@@ -180,7 +187,7 @@ module.exports.cset = function (cardId, controlId, body, callback) {
         var newValuesArr = body.values.split(',');
         var newValuesCount = newValuesArr.length;
         var valuesCount = cards[cardId][controlId].info.values;
-        
+
         if (newValuesCount == valuesCount){
 
           var controlType = cards[cardId][controlId].info.type;
@@ -210,9 +217,34 @@ module.exports.cset = function (cardId, controlId, body, callback) {
               break;
 
             case "INTEGER":
-              console.log("INTEGER type values: " + body.values.toString());
-              callback(null, response);
+              if (parseIntegers(newValuesArr, newValuesCount,
+                cards[cardId][controlId].info.min,
+                cards[cardId][controlId].info.max)){
+
+                  exec("amixer -c " + cardId + " cset numid=" + controlId + " -- " + body.values.toString(),
+                  function (err, stdout, stderr) {
+                    if (err) {
+                      callback(renderError(err), null)
+                    } else {
+                      if (stderr) {
+                        callback(renderError(stderr), null);
+                      } else {
+                        var result = { success: true };
+                        callback(null, parseContent(stdout, result));
+                      }
+                    }
+                  });
+
+              }else{
+                callback(renderError("Unexpected INTEGER value/s.\n"
+                + "INTEGER type expects integer values.\n"
+                + "Values must be within control max/min values span.\n"
+                + "Max allowed value for this control is " + cards[cardId][controlId].info.max + ".\n"
+                + "Min allowed value for this control is " + cards[cardId][controlId].info.min + ".\n"
+                + "Received values are: " + newValuesArr), null);
+              }
               break;
+
             case "ENUMERATED":
               console.log("ENUMERATED type values: " + body.values.toString());
               callback(null, response);
