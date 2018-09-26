@@ -1,0 +1,18 @@
+{
+  "name": "amixerapi",
+  "version": "1.0.0",
+  "description": "An API to interface with ALSA Amixer tool",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon server.js"
+  },
+  "author": "Alejandro Olivan Alvarez",
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^1.18.4"
+  },
+  "dependencies": {
+    "express": "^4.16.3"
+  }
+}
