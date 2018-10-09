@@ -1,6 +1,8 @@
 'use strict';
 
 var amixer = require('../models/AmixerModel');
+var connections = {};
+var intervalID;
 
 exports.controls = function(req, res) {
   amixer.controls(req.params.cardId, function(err, controls) {
